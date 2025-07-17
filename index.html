@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Grocery List</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 700px;
+      margin: 40px auto;
+      padding: 20px;
+      background-color: #f7f7f7;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2 { text-align: center; }
+    input[type="text"] {
+      padding: 8px;
+      width: 60%;
+      margin-right: 10px;
+    }
+    button {
+      padding: 8px 12px;
+      margin: 5px;
+      cursor: pointer;
+    }
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    li {
+      padding: 10px;
+      background: #fff;
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-radius: 4px;
+    }
+    .item-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    input[type="number"] {
+      width: 60px;
+      padding: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h2>🛒 Grocery List</h2>
+  <div>
+    <input type="text" id="itemInput" placeholder="Enter item name" />
+    <button onclick="addItem()">Add</button>
+    <button onclick="clearQuantities()">Clear Checkboxes & Quantities</button>
+    <button onclick="deleteSelected()">Delete Selected Items</button>
+  </div>
+  <ul id="groceryList"></ul>
+
+  <script>
+    let list = JSON.parse(localStorage.getItem('groceryList')) || [];
+
+    function saveList() {
+      localStorage.setItem('groceryList', JSON.stringify(list));
+    }
+
+    function addItem() {
+      const input = document.getElementById('itemInput');
+      const itemName = input.value.trim();
+      if (itemName === '') return;
+      list.push({ name: itemName, needed: false, quantity: '', delete: false });
+      input.value = '';
+      renderList();
+      saveList();
+    }
+
+    function toggleNeeded(index) {
+      list[index].needed = !list[index].needed;
+      saveList();
+    }
+
+    function updateQuantity(index, value) {
+      list[index].quantity = value;
+      saveList();
+    }
+
+    function toggleDelete(index) {
+      list[index].delete = !list[index].delete;
+      saveList();
+    }
+
+    function clearQuantities() {
+      list.forEach(item => {
+        item.needed = false;
+        item.quantity = '';
+      });
+      renderList();
+      saveList();
+    }
+
+    function deleteSelected() {
+      list = list.filter(item => !item.delete);
+      renderList();
+      saveList();
+    }
+
+    function renderList() {
+      const ul = document.getElementById('groceryList');
+      ul.innerHTML = '';
+      list.forEach((item, index) => {
+        const li = document.createElement('li');
+        
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'item-info';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = item.needed;
+        checkbox.title = 'Need this item?';
+        checkbox.onchange = () => toggleNeeded(index);
+
+        const label = document.createElement('label');
+        label.textContent = item.name;
+
+        const quantityInput = document.createElement('input');
+        quantityInput.type = 'number';
+        quantityInput.placeholder = 'Qty';
+        quantityInput.value = item.quantity;
+        quantityInput.oninput = (e) => updateQuantity(index, e.target.value);
+
+        const deleteCheckbox = document.createElement('input');
+        deleteCheckbox.type = 'checkbox';
+        deleteCheckbox.title = 'Mark for deletion';
+        deleteCheckbox.checked = item.delete || false;
+        deleteCheckbox.onchange = () => toggleDelete(index);
+
+        itemDiv.appendChild(checkbox);
+        itemDiv.appendChild(label);
+        itemDiv.appendChild(quantityInput);
+        itemDiv.appendChild(deleteCheckbox);
+
+        li.appendChild(itemDiv);
+        ul.appendChild(li);
+      });
+    }
+
+    // Load on startup
+    renderList();
+  </script>
+</body>
+</html>
